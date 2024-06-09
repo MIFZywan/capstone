@@ -1,0 +1,41 @@
+Firebase:
+1)RUN TERMINAL: npm install -g firebase-tools
+2)RUN TERMINAL: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+3)RUN TERMINAL: firebase login
+4) log in to your account through the web page
+5)RUN TERMINAL: firebase init
+
+Tools:
+//Toolsnya bang messi//
+npm
+nodejs versi 18
+firebase - emulator [tutor ada di atas]
+vscode
+webframework : Exprees
+
+
+upgrade:
+1. mengaktifkan authentication di project firebase capstone-project email/password.
+2. install dev baru npm firebase install.
+3. menginport modul firebase/app dan firebase/auth. di file index.js
+4. menambahkan firebaseConfig di file index.js.
+6. membuat route register, login, home, logout.
+7. tahap akhir tes postman. 
+
+Login
+{
+    "email": "oncom@gmail.com",
+    "password": "12345678"
+}
+
+Route
+- Register : POST [] 
+- Login : POST []
+- Home : GET []
+- Logout : POST []
+
+Pengujian akhir unit testing
+
+last -> Push Github
+
+Next time : Tahap Production CRUD
