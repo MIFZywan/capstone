@@ -61,7 +61,7 @@ router.post('/create', async (req, res) => {
             id,
             name_wisata: place.name, // nama_wisata
             // mengambil gambar url dari gmaps api
-            photoURL: place.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}` : '',
+            photoURL: place.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}&region=ID` : '',
             rating: place.rating || 'Tidak ada rating', // mendapatkan data rating wisata
             description: place.formatted_address || 'Tidak ada deskripsi', // mendapatkan deskripsi wisata ini yang berisi alamat wisata.
             // distance: distance.toFixed(2) // yg ini belum tau bagaimana cara mendapatkan jarak wisata dengan lokasi user saat ini.
