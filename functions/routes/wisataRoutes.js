@@ -7,7 +7,7 @@ const {
     nanoid
 } = require('nanoid');
 const {
-    // createWisata,
+    // createWisata, //di create wisata ini tidak menggunakan fungsi controllernya ya!
     getAllWisata,
     updateWisata,
     deleteWisata,
@@ -26,9 +26,6 @@ router.use(express.urlencoded({
 }));
 
 router.post('/create', async (req, res) => {
-
-    // Fungsi untuk menyimpan data wisata ke Firestore
-
     try {
         const id = nanoid();
         // request body nama_wisata
