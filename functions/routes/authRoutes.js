@@ -8,6 +8,7 @@ const {
 const {
     db
 } = require('../utils/firebase');
+const { user } = require('firebase-functions/v1/auth');
 
 const router = express.Router();
 
@@ -15,6 +16,9 @@ const router = express.Router();
 router.use(express.urlencoded({
     extended: true
 }));
+
+
+// kurang menambahkan jwt
 
 // User Registration Route
 router.post('/register', async (req, res) => {
@@ -26,29 +30,37 @@ router.post('/register', async (req, res) => {
             username
         } = req.body;
 
+        // data tidak boleh kosong
         if (!email || !password || !confirmPassword || !username) {
             return res.status(400).json({
                 message: 'Please fill in all fields!'
             });
         }
 
+        // password tidak sama
         if (password !== confirmPassword) {
             return res.status(400).json({
                 message: 'Passwords do not match!'
             });
         }
 
+        // ngecek apakah sudah ada email yang terdaftar
         const userExists = await db.collection('users').where('email', '==', email).get();
 
+        // user telah terdaftar
         if (!userExists.empty) {
             return res.status(400).json({
                 message: 'User already exists. Please login.'
             });
         }
 
+        // enkripsi
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        // mendaftarkan user ke auth firebase
         const userId = await register(email, hashedPassword, username);
 
+        // memasukan semua data ke firestore
         await db.collection('users').doc(userId).set({
             username,
             email,
@@ -56,7 +68,7 @@ router.post('/register', async (req, res) => {
         });
 
         res.status(200).json({
-            message: 'Registration Successful!'
+            message: 'User Created',
         });
     } catch (error) {
         console.error('Registration failed:', error);
@@ -106,6 +118,10 @@ router.post('/login', async (req, res) => {
             message: 'Login failed: ' + error.message
         });
     }
+});
+
+// update user
+router.put('/users/:id', async (req, res) => {
 });
 
 // User Logout Route

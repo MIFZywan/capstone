@@ -1,9 +1,13 @@
 const express = require('express');
+const axios = require('axios');
+const {
+    db
+} = require("../utils/firebase");
 const {
     nanoid
 } = require('nanoid');
 const {
-    createWisata,
+    // createWisata,
     getAllWisata,
     updateWisata,
     deleteWisata,
@@ -22,36 +26,57 @@ router.use(express.urlencoded({
 }));
 
 router.post('/create', async (req, res) => {
+
+    // Fungsi untuk menyimpan data wisata ke Firestore
+
     try {
         const id = nanoid();
+        // request body nama_wisata
         const {
-            name,
-            environment,
-            scenery,
-            category,
-            photo,
-            rating,
-            description
+            name_wisata,
         } = req.body;
-
-        if (!name || !environment || !scenery || !category || !photo || !rating || !description) {
+        // cek body request tidak boleh kosong!
+        if (!name_wisata) {
             return res.status(400).json({
                 error: "Semua bidang harus diisi"
             });
         }
 
+        // apiKey dari gmaps api
+        const apiKey = 'AIzaSyDv4gTOl7wC_UV3BEqEjnsObpJJUuq8Oc8';
+        // untuk mendapatkan data_wisata berdasarkan nama_wisata dari request body
+        const response = await axios.get(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name_wisata)}&inputtype=textquery&fields=photos,formatted_address,name,rating,geometry&key=${apiKey}`);
+        // ini untuk mengecek misalnya data yang di cari tidak ada di gmaps api
+        if (response.data.status !== 'OK') {
+            return res.status(400).json({
+                error: true,
+                message: response.data.error_message || 'Kesalahan saat mencari data wisata'
+            });
+        }
+
+        const place = response.data.candidates[0]; // Mengambil data dari respons API
+        if (!place) {
+            return res.status(404).json({ error: true, message: 'Tempat wisata tidak ditemukan' });
+        }
+
+        // data respone
         const newData = {
             id,
-            name,
-            photo,
-            rating,
-            description,
-            environment,
-            scenery,
-            category
+            name_wisata: place.name, // nama_wisata
+            // mengambil gambar url dari gmaps api
+            photoURL: place.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}` : '',
+            rating: place.rating || 'Tidak ada rating', // mendapatkan data rating wisata
+            description: place.formatted_address || 'Tidak ada deskripsi', // mendapatkan deskripsi wisata ini yang berisi alamat wisata.
+            // distance: distance.toFixed(2) // yg ini belum tau bagaimana cara mendapatkan jarak wisata dengan lokasi user saat ini.
+            // environment,
+            // scenery,
+            // category
         };
 
-        await createWisata(newData);
+        // mengirim data ke firestore
+        await db.collection('wisata').doc(id).set(newData);
+
+        // respone body
         return res.status(200).json({
             success: true,
             data: newData
@@ -130,6 +155,8 @@ router.get('/name/:name', async (req, res) => {
         });
     }
 });
+
+
 
 router.get('/environment/:environment', async (req, res) => {
     try {

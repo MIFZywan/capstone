@@ -8,7 +8,9 @@ const {
 } = require("firebase/auth");
 const bcrypt = require('bcrypt');
 
-async function register(email, password, username) {
+
+// register
+async function register(email, password) {
     try {
         // Hash password sebelum membuat pengguna baru
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -23,6 +25,8 @@ async function register(email, password, username) {
     }
 }
 
+
+// login
 async function login(email, password) {
     try {
         // Ambil data pengguna berdasarkan email
@@ -52,6 +56,11 @@ async function login(email, password) {
     }
 }
 
+async function update(username){
+    
+}
+
+// logout
 async function logout() {
     try {
         // Sign out pengguna yang sedang login
