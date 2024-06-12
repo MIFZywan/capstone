@@ -25,6 +25,7 @@ router.use(express.urlencoded({
     extended: true
 }));
 
+// create wisata
 router.post('/create', async (req, res) => {
     try {
         const id = nanoid();
@@ -84,6 +85,26 @@ router.post('/create', async (req, res) => {
             error: error.message
         });
     }
+});
+
+// Get Top Places
+router.get('/places/top', async (req, res)=>{
+    
+});
+
+// Get Nearest Places
+router.get('/places/nearest', async (req, res)=>{
+
+});
+
+// Get Place
+router.get('/places/:id', async (req, res)=> {
+
+});
+
+// Search Places
+router.get('/places/', async (req, res)=>{
+
 });
 
 router.get('/', async (req, res) => {
