@@ -41,8 +41,8 @@ router.post('/create', async (req, res) => {
 
         // apiKey dari gmaps api
         const apiKey = 'AIzaSyDv4gTOl7wC_UV3BEqEjnsObpJJUuq8Oc8';
-        // untuk mendapatkan data_wisata berdasarkan nama_wisata dari request body
-        const response = await axios.get(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name_wisata)}&inputtype=textquery&fields=photos,formatted_address,name,rating,geometry&key=${apiKey}`);
+        // untuk mendapatkan data_wisata berdasarkan nama_wisata dari request body, berdasarkan region:ID (indonesia)
+        const response = await axios.get(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name_wisata)}&inputtype=textquery&fields=photos,formatted_address,name,rating,geometry&key=${apiKey}&region=ID`);
         // ini untuk mengecek misalnya data yang di cari tidak ada di gmaps api
         if (response.data.status !== 'OK') {
             return res.status(400).json({
@@ -61,7 +61,7 @@ router.post('/create', async (req, res) => {
             id,
             name_wisata: place.name, // nama_wisata
             // mengambil gambar url dari gmaps api
-            photoURL: place.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}&region=ID` : '',
+            photoURL: place.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}` : '',
             rating: place.rating || 'Tidak ada rating', // mendapatkan data rating wisata
             description: place.formatted_address || 'Tidak ada deskripsi', // mendapatkan deskripsi wisata ini yang berisi alamat wisata.
             // distance: distance.toFixed(2) // yg ini belum tau bagaimana cara mendapatkan jarak wisata dengan lokasi user saat ini.
