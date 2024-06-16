@@ -116,6 +116,101 @@ async function getWisataByCategory(category) {
     }
 }
 
+async function getTopWisata() {
+    try {
+        const snapshot = await db.collection('wisata').orderBy('rating', 'desc').limit(10).get();
+        const topWisata = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            topWisata.push({
+                id: doc.id,
+                name: data.name,
+                environment: data.environment,
+                scenery: data.scenery,
+                category: data.category,
+                photo: data.photo,
+                rating: data.rating,
+                description: data.description
+            });
+        });
+        return topWisata;
+    } catch (error) {
+        throw new Error(`Failed to get top wisata: ${error.message}`);
+    }
+}
+
+async function getNearestWisata(userLat, userLng) {
+    try {
+        const snapshot = await db.collection('wisata').get();
+        const allWisata = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            allWisata.push({
+                id: doc.id,
+                name: data.name,
+                environment: data.environment,
+                scenery: data.scenery,
+                category: data.category,
+                photo: data.photo,
+                rating: data.rating,
+                description: data.description,
+                location: data.location
+            });
+        });
+
+        allWisata.sort((a, b) => {
+            const distanceA = Math.sqrt(Math.pow(a.location.lat - userLat, 2) + Math.pow(a.location.lng - userLng, 2));
+            const distanceB = Math.sqrt(Math.pow(b.location.lat - userLat, 2) + Math.pow(b.location.lng - userLng, 2));
+            return distanceA - distanceB;
+        });
+
+        return allWisata.slice(0, 10);
+    } catch (error) {
+        throw new Error(`Failed to get nearest wisata: ${error.message}`);
+    }
+}
+
+async function getWisataByFilters(filters) {
+    try {
+        let data = [];
+        const {
+            name,
+            environment,
+            scenery,
+            category
+        } = filters;
+
+        if (name && environment) {
+            data = (await getWisataByName(name)).filter(item => item.environment === environment);
+        } else if (name && scenery) {
+            data = (await getWisataByName(name)).filter(item => item.scenery === scenery);
+        } else if (name && category) {
+            data = (await getWisataByName(name)).filter(item => item.category === category);
+        } else if (environment && scenery) {
+            data = (await getWisataByEnvironment(environment)).filter(item => item.scenery === scenery);
+        } else if (environment && category) {
+            data = (await getWisataByEnvironment(environment)).filter(item => item.category === category);
+        } else if (scenery && category) {
+            data = (await getWisataByScenery(scenery)).filter(item => item.category === category);
+        } else {
+            throw new Error("Please provide exactly two filters");
+        }
+
+        return data.map(item => ({
+            id: item.id,
+            name: item.name,
+            photo: item.photo,
+            rating: item.rating,
+            description: item.description,
+            environment: item.environment,
+            scenery: item.scenery,
+            category: item.category
+        }));
+    } catch (error) {
+        throw new Error(`Failed to get wisata by filters: ${error.message}`);
+    }
+}
+
 module.exports = {
     createWisata,
     getAllWisata,
@@ -124,5 +219,8 @@ module.exports = {
     getWisataByName,
     getWisataByEnvironment,
     getWisataByScenery,
-    getWisataByCategory
+    getWisataByCategory,
+    getTopWisata,
+    getNearestWisata,
+    getWisataByFilters
 };

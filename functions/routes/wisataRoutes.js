@@ -54,7 +54,10 @@ router.post('/create', async (req, res) => {
 
         const place = response.data.candidates[0]; // Mengambil data dari respons API
         if (!place) {
-            return res.status(404).json({ error: true, message: 'Tempat wisata tidak ditemukan' });
+            return res.status(404).json({
+                error: true,
+                message: 'Tempat wisata tidak ditemukan'
+            });
         }
 
         // data respone
@@ -63,12 +66,10 @@ router.post('/create', async (req, res) => {
             name_wisata: place.name, // nama_wisata
             // mengambil gambar url dari gmaps api
             photoURL: place.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}` : '',
-            rating: place.rating || 'Tidak ada rating', // mendapatkan data rating wisata
-            description: place.formatted_address || 'Tidak ada deskripsi', // mendapatkan deskripsi wisata ini yang berisi alamat wisata.
-            // distance: distance.toFixed(2) // yg ini belum tau bagaimana cara mendapatkan jarak wisata dengan lokasi user saat ini.
-            // environment,
-            // scenery,
-            // category
+            rating: place.rating || 'Tidak ada rating',
+            description: place.formatted_address || 'Tidak ada deskripsi',
+            lat: place.lat || 'Tidak ada lat',
+            lon: place.lon || 'Tidak ada lon',
         };
 
         // mengirim data ke firestore
@@ -88,23 +89,38 @@ router.post('/create', async (req, res) => {
 });
 
 // Get Top Places
-router.get('/places/top', async (req, res)=>{
-    
+router.get('/top', async (req, res) => {
+    try {
+        const topWisata = await getTopWisata();
+        return res.status(200).json(topWisata);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            error: error.message
+        });
+    }
 });
 
 // Get Nearest Places
-router.get('/places/nearest', async (req, res)=>{
-
-});
-
-// Get Place
-router.get('/places/:id', async (req, res)=> {
-
-});
-
-// Search Places
-router.get('/places/', async (req, res)=>{
-
+router.get('/nearest', async (req, res) => {
+    try {
+        const {
+            lat,
+            lng
+        } = req.query;
+        if (!lat || !lng) {
+            return res.status(400).json({
+                error: "Lat dan Lng harus diisi"
+            });
+        }
+        const nearestWisata = await getNearestWisata(parseFloat(lat), parseFloat(lng));
+        return res.status(200).json(nearestWisata);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            error: error.message
+        });
+    }
 });
 
 router.get('/', async (req, res) => {
@@ -142,6 +158,70 @@ router.get('/', async (req, res) => {
             scenery: item.scenery,
             category: item.category
         }));
+        return res.status(200).json(filteredData);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
+router.get('/filter', async (req, res) => {
+    try {
+        const {
+            name,
+            environment,
+            scenery,
+            category
+        } = req.query;
+
+        // Gather all provided filters
+        const filters = {
+            name,
+            environment,
+            scenery,
+            category
+        };
+        const providedFilters = Object.keys(filters).filter(key => filters[key] !== undefined);
+
+        if (providedFilters.length !== 2) {
+            return res.status(400).json({
+                error: "Please provide exactly two filters"
+            });
+        }
+
+        let data;
+
+        if (name && environment) {
+            data = (await getWisataByName(name)).filter(item => item.environment === environment);
+        } else if (name && scenery) {
+            data = (await getWisataByName(name)).filter(item => item.scenery === scenery);
+        } else if (name && category) {
+            data = (await getWisataByName(name)).filter(item => item.category === category);
+        } else if (environment && scenery) {
+            data = (await getWisataByEnvironment(environment)).filter(item => item.scenery === scenery);
+        } else if (environment && category) {
+            data = (await getWisataByEnvironment(environment)).filter(item => item.category === category);
+        } else if (scenery && category) {
+            data = (await getWisataByScenery(scenery)).filter(item => item.category === category);
+        } else {
+            return res.status(400).json({
+                error: "Please provide exactly two filters"
+            });
+        }
+
+        const filteredData = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            photo: item.photo,
+            rating: item.rating,
+            description: item.description,
+            environment: item.environment,
+            scenery: item.scenery,
+            category: item.category
+        }));
+
         return res.status(200).json(filteredData);
     } catch (error) {
         console.error(error);
