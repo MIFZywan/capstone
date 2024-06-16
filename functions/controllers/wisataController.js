@@ -30,12 +30,14 @@ async function getAllWisata() {
             allWisata.push({
                 id: doc.id,
                 name: data.name,
+                photo: data.photo, // Tambahkan field photo
+                rating: data.rating, // Tambahkan field rating
+                description: data.description, // Tambahkan field description
+                lat: data.lat,
+                lon: data.lon,
                 environment: data.environment,
                 scenery: data.scenery,
                 category: data.category,
-                photo: data.photo, // Tambahkan field photo
-                rating: data.rating, // Tambahkan field rating
-                description: data.description // Tambahkan field description
             });
         });
         return allWisata;
