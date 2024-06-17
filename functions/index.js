@@ -15,4 +15,4 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/wisata', wisataRoutes);
 
-exports.app = functions.https.onRequest(app);
+exports.app = functions.region('asia-southeast2').https.onRequest(app);
