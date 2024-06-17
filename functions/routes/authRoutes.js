@@ -33,6 +33,7 @@ router.post('/register', async (req, res) => {
         // data tidak boleh kosong
         if (!email || !password || !confirmPassword || !username) {
             return res.status(400).json({
+                "error": true,
                 message: 'Please fill in all fields!'
             });
         }
@@ -40,6 +41,7 @@ router.post('/register', async (req, res) => {
         // password tidak sama
         if (password !== confirmPassword) {
             return res.status(400).json({
+                "error": true,
                 message: 'Passwords do not match!'
             });
         }
@@ -50,6 +52,7 @@ router.post('/register', async (req, res) => {
         // user telah terdaftar
         if (!userExists.empty) {
             return res.status(400).json({
+                "error": true,
                 message: 'User already exists. Please login.'
             });
         }
@@ -68,11 +71,13 @@ router.post('/register', async (req, res) => {
         });
 
         res.status(200).json({
+            "error": false,
             message: 'User Created',
         });
     } catch (error) {
         console.error('Registration failed:', error);
         res.status(500).json({
+            "error": true,
             message: 'Registration failed: ' + error.message
         });
     }
@@ -88,6 +93,7 @@ router.post('/login', async (req, res) => {
 
         if (!email || !password) {
             return res.status(400).json({
+                "error": true,
                 message: 'Please provide email and password!'
             });
         }
@@ -96,6 +102,7 @@ router.post('/login', async (req, res) => {
 
         if (userData.empty) {
             return res.status(400).json({
+                "error": true,
                 message: 'User not found'
             });
         }
@@ -105,16 +112,19 @@ router.post('/login', async (req, res) => {
 
         if (!passwordMatch) {
             return res.status(400).json({
+                "error": true,
                 message: 'Incorrect password'
             });
         }
 
         res.status(200).json({
+            "error": false,
             message: 'Login successful!'
         });
     } catch (error) {
         console.error('Login failed:', error);
         res.status(500).json({
+            "error": true,
             message: 'Login failed: ' + error.message
         });
     }
@@ -129,11 +139,13 @@ router.post('/logout', async (req, res) => {
     try {
         await logout();
         res.status(200).json({
+            "error": false,
             message: 'Logout successful!'
         });
     } catch (error) {
         console.error('Logout failed:', error);
         res.status(500).json({
+            "error": true,
             message: 'Logout failed: ' + error.message
         });
     }
