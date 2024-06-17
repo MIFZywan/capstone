@@ -102,6 +102,19 @@ router.get('/top', async (req, res) => {
     }
 });
 
+// Get Top Places
+router.get('/top', async (req, res) => {
+    try {
+        const topWisata = await getTopWisata();
+        return res.status(200).json(topWisata);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
 // Get Nearest Places
 router.get('/nearest', async (req, res) => {
     try {
@@ -130,8 +143,8 @@ router.get('/', async (req, res) => {
 
         if (snapshot.empty) {
             return res.status(404).json({
-                error: true,
-                message: 'No wisata found'
+                success: false,
+                message: 'Wisata not found'
             });
         }
 
@@ -144,7 +157,10 @@ router.get('/', async (req, res) => {
                 rating: doc.data().rating,
                 description: doc.data().description,
                 lat: doc.data().lat,
-                lon: doc.data().lon
+                lon: doc.data().lon,
+                environment_classes: doc.data().environment_classes,
+                scenery_classes: doc.data().scenery_classes,
+                category_classes: doc.data().category_classes
             };
             filteredData.push(wisata);
         });
@@ -167,72 +183,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-
-
-router.get('/filter', async (req, res) => {
-    try {
-        const {
-            name,
-            environment,
-            scenery,
-            category
-        } = req.query;
-
-        // Gather all provided filters
-        const filters = {
-            name,
-            environment,
-            scenery,
-            category
-        };
-        const providedFilters = Object.keys(filters).filter(key => filters[key] !== undefined);
-
-        if (providedFilters.length !== 2) {
-            return res.status(400).json({
-                error: "Please provide exactly two filters"
-            });
-        }
-
-        let data;
-
-        if (name && environment) {
-            data = (await getWisataByName(name)).filter(item => item.environment === environment);
-        } else if (name && scenery) {
-            data = (await getWisataByName(name)).filter(item => item.scenery === scenery);
-        } else if (name && category) {
-            data = (await getWisataByName(name)).filter(item => item.category === category);
-        } else if (environment && scenery) {
-            data = (await getWisataByEnvironment(environment)).filter(item => item.scenery === scenery);
-        } else if (environment && category) {
-            data = (await getWisataByEnvironment(environment)).filter(item => item.category === category);
-        } else if (scenery && category) {
-            data = (await getWisataByScenery(scenery)).filter(item => item.category === category);
-        } else {
-            return res.status(400).json({
-                error: "Please provide exactly two filters"
-            });
-        }
-
-        const filteredData = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            photo: item.photo,
-            rating: item.rating,
-            description: item.description,
-            environment: item.environment,
-            scenery: item.scenery,
-            category: item.category
-        }));
-
-        return res.status(200).json(filteredData);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            error: error.message
-        });
-    }
-});
-
 // Method to retrieve tourist spots by name
 router.get('/name/:name', async (req, res) => {
     try {
@@ -241,8 +191,8 @@ router.get('/name/:name', async (req, res) => {
 
         if (snapshot.empty) {
             return res.status(404).json({
-                error: true,
-                message: 'Tempat wisata tidak ditemukan'
+                success: false,
+                message: 'Wisata not found'
             });
         }
 
@@ -255,7 +205,10 @@ router.get('/name/:name', async (req, res) => {
                 rating: doc.data().rating,
                 description: doc.data().description,
                 lat: doc.data().lat,
-                lon: doc.data().lon
+                lon: doc.data().lon,
+                environment_classes: doc.data().environment_classes,
+                scenery_classes: doc.data().scenery_classes,
+                category_classes: doc.data().category_classes
             };
             filteredData.push(wisata);
         });
@@ -280,51 +233,98 @@ router.get('/name/:name', async (req, res) => {
 router.get('/environment/:environment', async (req, res) => {
     try {
         const environment = req.params.environment;
-        const data = await getWisataByEnvironment(environment);
-        const filteredData = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            photo: item.photo,
-            rating: item.rating,
-            description: item.description,
-            lat: item.lat,
-            lon: item.lon,
-            description: item.description,
-            environment: item.environment,
-            scenery: item.scenery,
-            category: item.category
-        }));
-        return res.status(200).json(filteredData);
+        if (!environment) {
+            return res.status(400).json({
+                error: "Environment parameter is required"
+            });
+        }
+        const snapshot = await db.collection('wisata').where('environment_classes', '==', environment).get();
+
+        if (snapshot.empty) {
+            return res.status(404).json({
+                success: false,
+                message: 'Wisata not found'
+            });
+        }
+
+        const filteredData = [];
+        snapshot.forEach(doc => {
+            const wisata = {
+                id: doc.id,
+                name: doc.data().name,
+                photoURL: doc.data().photoURL,
+                rating: doc.data().rating,
+                description: doc.data().description,
+                lat: doc.data().lat,
+                lon: doc.data().lon,
+                environment_classes: doc.data().environment_classes,
+                scenery_classes: doc.data().scenery_classes,
+                category_classes: doc.data().category_classes
+            };
+            filteredData.push(wisata);
+        });
+
+        return res.status(200).json({
+            error: false,
+            message: "Wisata fetched successfully",
+            data: filteredData
+        });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({
-            error: error.message
+            error: true,
+            message: error.message
         });
     }
 });
 
+
 router.get('/scenery/:scenery', async (req, res) => {
     try {
         const scenery = req.params.scenery;
-        const data = await getWisataByScenery(scenery);
-        const filteredData = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            photo: item.photo,
-            rating: item.rating,
-            description: item.description,
-            lat: item.lat,
-            lon: item.lon,
-            description: item.description,
-            environment: item.environment,
-            scenery: item.scenery,
-            category: item.category
-        }));
-        return res.status(200).json(filteredData);
+        if (!scenery) {
+            return res.status(400).json({
+                error: "Scenery parameter is required"
+            });
+        }
+        const snapshot = await db.collection('wisata').where('scenery_classes', '==', scenery).get();
+
+        if (snapshot.empty) {
+            return res.status(404).json({
+                success: false,
+                message: 'Wisata not found'
+            });
+        }
+
+        const filteredData = [];
+        snapshot.forEach(doc => {
+            const wisata = {
+                id: doc.id,
+                name: doc.data().name,
+                photoURL: doc.data().photoURL,
+                rating: doc.data().rating,
+                description: doc.data().description,
+                lat: doc.data().lat,
+                lon: doc.data().lon,
+                environment_classes: doc.data().environment_classes,
+                scenery_classes: doc.data().scenery_classes,
+                category_classes: doc.data().category_classes
+            };
+            filteredData.push(wisata);
+        });
+
+        return res.status(200).json({
+            error: false,
+            message: "Wisata fetched successfully",
+            data: filteredData
+        });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({
-            error: error.message
+            error: true,
+            message: error.message
         });
     }
 });
@@ -332,24 +332,48 @@ router.get('/scenery/:scenery', async (req, res) => {
 router.get('/category/:category', async (req, res) => {
     try {
         const category = req.params.category;
-        const data = await getWisataByCategory(category);
-        const filteredData = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            photo: item.photo,
-            rating: item.rating,
-            description: item.description,
-            lat: item.lat,
-            lon: item.lon,
-            environment: item.environment,
-            scenery: item.scenery,
-            category: item.category
-        }));
-        return res.status(200).json(filteredData);
+        if (!category) {
+            return res.status(400).json({
+                error: "Category parameter is required"
+            });
+        }
+        const snapshot = await db.collection('wisata').where('category_classes', '==', category).get();
+
+        if (snapshot.empty) {
+            return res.status(404).json({
+                success: false,
+                message: 'Wisata not found'
+            });
+        }
+
+        const filteredData = [];
+        snapshot.forEach(doc => {
+            const wisata = {
+                id: doc.id,
+                name: doc.data().name,
+                photoURL: doc.data().photoURL,
+                rating: doc.data().rating,
+                description: doc.data().description,
+                lat: doc.data().lat,
+                lon: doc.data().lon,
+                environment_classes: doc.data().environment_classes,
+                scenery_classes: doc.data().scenery_classes,
+                category_classes: doc.data().category_classes
+            };
+            filteredData.push(wisata);
+        });
+
+        return res.status(200).json({
+            error: false,
+            message: "Wisata fetched successfully",
+            data: filteredData
+        });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({
-            error: error.message
+            error: true,
+            message: error.message
         });
     }
 });
@@ -386,9 +410,9 @@ router.put('/:id', async (req, res) => {
                 description: updatedWisata.description,
                 lat: updatedWisata.lat,
                 lon: updatedWisata.lon,
-                environment: updatedWisata.environment || '',
-                scenery: updatedWisata.scenery || '',
-                category: updatedWisata.category || ''
+                environment_classes: updatedWisata.environment_classes || '',
+                scenery_classes: updatedWisata.scenery_classes || '',
+                category_classes: updatedWisata.category_classes || ''
             }
         });
     } catch (error) {
@@ -405,13 +429,30 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        await deleteWisata(id);
+
+        // Get the document snapshot
+        const snapshot = await db.collection('wisata').doc(id).get();
+
+        // Check if the document exists
+        if (!snapshot.exists) {
+            return res.status(404).json({
+                success: false,
+                message: 'Wisata not found'
+            });
+        }
+
+        // Delete the document
+        await db.collection('wisata').doc(id).delete();
+
         return res.status(200).json({
-            success: true
+            error: false,
+            message: 'Wisata data has been successfully deleted'
         });
     } catch (error) {
         console.error(error);
         return res.status(500).json({
+            error: true,
+            message: 'Failed to delete wisata data',
             error: error.message
         });
     }

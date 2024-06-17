@@ -2,24 +2,19 @@ const {
     db
 } = require("../utils/firebase");
 
-async function createWisata(data) {
-    try {
-        const newData = {
-            id: data.id,
-            name: data.name,
-            photo: data.photo,
-            rating: data.rating,
-            description: data.description,
-            environment: data.environment,
-            scenery: data.scenery,
-            category: data.category
-        };
-        await db.collection('wisata').doc(`/${data.id}/`).create(newData);
-    } catch (error) {
-        throw error;
-    }
+// Function to filter out undefined values from an object
+function filterUndefinedValues(data) {
+    return Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
 }
 
+async function createWisata(data) {
+    try {
+        const filteredData = filterUndefinedValues(data);
+        await db.collection('wisata').doc(data.id).set(filteredData);
+    } catch (error) {
+        throw new Error(`Failed to create wisata: ${error.message}`);
+    }
+}
 
 async function getAllWisata() {
     try {
@@ -30,14 +25,14 @@ async function getAllWisata() {
             allWisata.push({
                 id: doc.id,
                 name: data.name,
-                photo: data.photo, // Tambahkan field photo
-                rating: data.rating, // Tambahkan field rating
-                description: data.description, // Tambahkan field description
+                photo: data.photo,
+                rating: data.rating,
+                description: data.description,
                 lat: data.lat,
                 lon: data.lon,
-                environment: data.environment,
-                scenery: data.scenery,
-                category: data.category,
+                environment_classes: data.environment_classes,
+                scenery_classes: data.scenery_classes,
+                category_classes: data.category_classes,
             });
         });
         return allWisata;
@@ -48,11 +43,12 @@ async function getAllWisata() {
 
 async function updateWisata(id, data) {
     try {
+        const filteredData = filterUndefinedValues(data);
         const documentRef = db.collection('wisata').doc(id);
-        await documentRef.update(data);
+        await documentRef.update(filteredData);
         return true;
     } catch (error) {
-        throw error;
+        throw new Error(`Failed to update wisata: ${error.message}`);
     }
 }
 
@@ -62,7 +58,7 @@ async function deleteWisata(id) {
         await documentRef.delete();
         return true;
     } catch (error) {
-        throw error;
+        throw new Error(`Failed to delete wisata: ${error.message}`);
     }
 }
 
@@ -79,9 +75,9 @@ async function getWisataByName(name) {
     }
 }
 
-async function getWisataByEnvironment(environment) {
+async function getWisataByEnvironment(environment_classes) {
     try {
-        const snapshot = await db.collection('wisata').where('environment', '==', environment).get();
+        const snapshot = await db.collection('wisata').where('environment_classes', '==', environment_classes).get();
         const wisataByEnvironment = [];
         snapshot.forEach(doc => {
             wisataByEnvironment.push(doc.data());
@@ -94,7 +90,7 @@ async function getWisataByEnvironment(environment) {
 
 async function getWisataByScenery(scenery) {
     try {
-        const snapshot = await db.collection('wisata').where('scenery', '==', scenery).get();
+        const snapshot = await db.collection('wisata').where('scenery_classes', '==', scenery).get();
         const wisataByScenery = [];
         snapshot.forEach(doc => {
             wisataByScenery.push(doc.data());
@@ -107,7 +103,7 @@ async function getWisataByScenery(scenery) {
 
 async function getWisataByCategory(category) {
     try {
-        const snapshot = await db.collection('wisata').where('category', '==', category).get();
+        const snapshot = await db.collection('wisata').where('category_classes', '==', category).get();
         const wisataByCategory = [];
         snapshot.forEach(doc => {
             wisataByCategory.push(doc.data());
@@ -127,12 +123,14 @@ async function getTopWisata() {
             topWisata.push({
                 id: doc.id,
                 name: data.name,
-                environment: data.environment,
-                scenery: data.scenery,
-                category: data.category,
                 photo: data.photo,
                 rating: data.rating,
-                description: data.description
+                description: data.description,
+                lat: data.lat,
+                lon: data.lon,
+                environment: data.environment_classes,
+                scenery: data.scenery_classes,
+                category: data.category_classes,
             });
         });
         return topWisata;
@@ -150,66 +148,26 @@ async function getNearestWisata(userLat, userLng) {
             allWisata.push({
                 id: doc.id,
                 name: data.name,
-                environment: data.environment,
-                scenery: data.scenery,
-                category: data.category,
                 photo: data.photo,
                 rating: data.rating,
                 description: data.description,
-                location: data.location
+                lat: data.lat,
+                lon: data.lon,
+                environment: data.environment_classes,
+                scenery: data.scenery_classes,
+                category: data.category_classes,
             });
         });
 
         allWisata.sort((a, b) => {
-            const distanceA = Math.sqrt(Math.pow(a.location.lat - userLat, 2) + Math.pow(a.location.lng - userLng, 2));
-            const distanceB = Math.sqrt(Math.pow(b.location.lat - userLat, 2) + Math.pow(b.location.lng - userLng, 2));
+            const distanceA = Math.sqrt(Math.pow(a.lat - userLat, 2) + Math.pow(a.lon - userLng, 2));
+            const distanceB = Math.sqrt(Math.pow(b.lat - userLat, 2) + Math.pow(b.lon - userLng, 2));
             return distanceA - distanceB;
         });
 
         return allWisata.slice(0, 10);
     } catch (error) {
         throw new Error(`Failed to get nearest wisata: ${error.message}`);
-    }
-}
-
-async function getWisataByFilters(filters) {
-    try {
-        let data = [];
-        const {
-            name,
-            environment,
-            scenery,
-            category
-        } = filters;
-
-        if (name && environment) {
-            data = (await getWisataByName(name)).filter(item => item.environment === environment);
-        } else if (name && scenery) {
-            data = (await getWisataByName(name)).filter(item => item.scenery === scenery);
-        } else if (name && category) {
-            data = (await getWisataByName(name)).filter(item => item.category === category);
-        } else if (environment && scenery) {
-            data = (await getWisataByEnvironment(environment)).filter(item => item.scenery === scenery);
-        } else if (environment && category) {
-            data = (await getWisataByEnvironment(environment)).filter(item => item.category === category);
-        } else if (scenery && category) {
-            data = (await getWisataByScenery(scenery)).filter(item => item.category === category);
-        } else {
-            throw new Error("Please provide exactly two filters");
-        }
-
-        return data.map(item => ({
-            id: item.id,
-            name: item.name,
-            photo: item.photo,
-            rating: item.rating,
-            description: item.description,
-            environment: item.environment,
-            scenery: item.scenery,
-            category: item.category
-        }));
-    } catch (error) {
-        throw new Error(`Failed to get wisata by filters: ${error.message}`);
     }
 }
 
@@ -223,6 +181,5 @@ module.exports = {
     getWisataByScenery,
     getWisataByCategory,
     getTopWisata,
-    getNearestWisata,
-    getWisataByFilters
+    getNearestWisata
 };
