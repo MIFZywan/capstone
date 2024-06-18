@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const {
     register,
     login,
+    update,
     logout
 } = require('../controllers/authController');
 const {
@@ -16,7 +17,7 @@ const router = express.Router();
 router.use(express.urlencoded({
     extended: true
 }));
-
+router.use(express.json());
 
 // kurang menambahkan jwt
 
@@ -33,6 +34,7 @@ router.post('/register', async (req, res) => {
         // data tidak boleh kosong
         if (!email || !password || !confirmPassword || !username) {
             return res.status(400).json({
+                "error": true,
                 message: 'Please fill in all fields!'
             });
         }
@@ -40,6 +42,7 @@ router.post('/register', async (req, res) => {
         // password tidak sama
         if (password !== confirmPassword) {
             return res.status(400).json({
+                "error": true,
                 message: 'Passwords do not match!'
             });
         }
@@ -50,6 +53,7 @@ router.post('/register', async (req, res) => {
         // user telah terdaftar
         if (!userExists.empty) {
             return res.status(400).json({
+                "error": true,
                 message: 'User already exists. Please login.'
             });
         }
@@ -68,11 +72,13 @@ router.post('/register', async (req, res) => {
         });
 
         res.status(200).json({
+            "error": false,
             message: 'User Created',
         });
     } catch (error) {
         console.error('Registration failed:', error);
         res.status(500).json({
+            "error": true,
             message: 'Registration failed: ' + error.message
         });
     }
@@ -88,6 +94,7 @@ router.post('/login', async (req, res) => {
 
         if (!email || !password) {
             return res.status(400).json({
+                "error": true,
                 message: 'Please provide email and password!'
             });
         }
@@ -96,6 +103,7 @@ router.post('/login', async (req, res) => {
 
         if (userData.empty) {
             return res.status(400).json({
+                "error": true,
                 message: 'User not found'
             });
         }
@@ -105,16 +113,19 @@ router.post('/login', async (req, res) => {
 
         if (!passwordMatch) {
             return res.status(400).json({
+                "error": true,
                 message: 'Incorrect password'
             });
         }
 
         res.status(200).json({
+            "error": false,
             message: 'Login successful!'
         });
     } catch (error) {
         console.error('Login failed:', error);
         res.status(500).json({
+            "error": true,
             message: 'Login failed: ' + error.message
         });
     }
@@ -122,6 +133,38 @@ router.post('/login', async (req, res) => {
 
 // update user
 router.put('/users/:id', async (req, res) => {
+    try {
+        const uid = req.params.id;
+        const {
+            username,
+            password
+        } = req.body;
+
+        // Validate input
+        if (!username && !password) {
+            return res.status(400).json({
+                "error": true,
+                message: 'Please provide a username or password to update!'
+            });
+        }
+
+        // Update user information
+        await update(uid, {
+            username,
+            password
+        });
+
+        res.status(200).json({
+            "error": false,
+            message: 'User updated successfully!'
+        });
+    } catch (error) {
+        console.error('Update failed:', error);
+        res.status(500).json({
+            "error": true,
+            message: 'Update failed: ' + error.message
+        });
+    }
 });
 
 // User Logout Route
@@ -129,11 +172,13 @@ router.post('/logout', async (req, res) => {
     try {
         await logout();
         res.status(200).json({
+            "error": false,
             message: 'Logout successful!'
         });
     } catch (error) {
         console.error('Logout failed:', error);
         res.status(500).json({
+            "error": true,
             message: 'Logout failed: ' + error.message
         });
     }

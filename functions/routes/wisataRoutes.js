@@ -11,6 +11,7 @@ const {
     getAllWisata,
     updateWisata,
     deleteWisata,
+    getTopWisata,
     getWisataByName,
     getWisataByEnvironment,
     getWisataByScenery,
@@ -93,23 +94,15 @@ router.post('/create', async (req, res) => {
 router.get('/top', async (req, res) => {
     try {
         const topWisata = await getTopWisata();
-        return res.status(200).json(topWisata);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            error: error.message
+        return res.status(200).json({
+            error: false,
+            message: "Wisata fetched successfully",
+            data: topWisata
         });
-    }
-});
-
-// Get Top Places
-router.get('/top', async (req, res) => {
-    try {
-        const topWisata = await getTopWisata();
-        return res.status(200).json(topWisata);
     } catch (error) {
         console.error(error);
         return res.status(500).json({
+            error: true,
             error: error.message
         });
     }
