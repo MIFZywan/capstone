@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const {
     register,
     login,
+    update,
     logout
 } = require('../controllers/authController');
 const {
@@ -16,7 +17,7 @@ const router = express.Router();
 router.use(express.urlencoded({
     extended: true
 }));
-
+router.use(express.json());
 
 // kurang menambahkan jwt
 
@@ -132,6 +133,38 @@ router.post('/login', async (req, res) => {
 
 // update user
 router.put('/users/:id', async (req, res) => {
+    try {
+        const uid = req.params.id;
+        const {
+            username,
+            password
+        } = req.body;
+
+        // Validate input
+        if (!username && !password) {
+            return res.status(400).json({
+                "error": true,
+                message: 'Please provide a username or password to update!'
+            });
+        }
+
+        // Update user information
+        await update(uid, {
+            username,
+            password
+        });
+
+        res.status(200).json({
+            "error": false,
+            message: 'User updated successfully!'
+        });
+    } catch (error) {
+        console.error('Update failed:', error);
+        res.status(500).json({
+            "error": true,
+            message: 'Update failed: ' + error.message
+        });
+    }
 });
 
 // User Logout Route

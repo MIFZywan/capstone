@@ -56,8 +56,34 @@ async function login(email, password) {
     }
 }
 
-async function update(username){
-    
+async function update(uid, {
+    username,
+    password
+}) {
+    try {
+        const userRef = db.collection('users').doc(uid);
+
+        // Prepare updates object
+        const updates = {};
+        if (username) updates.username = username;
+        if (password) updates.password = await bcrypt.hash(password, 10);
+
+        // Update user information
+        await userRef.update(updates);
+        return true;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Logout
+async function logout() {
+    try {
+        // Sign out the currently logged in user
+        await signOut(auth);
+    } catch (error) {
+        throw error;
+    }
 }
 
 // logout
@@ -73,5 +99,6 @@ async function logout() {
 module.exports = {
     register,
     login,
+    update,
     logout
 };

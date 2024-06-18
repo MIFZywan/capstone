@@ -114,30 +114,27 @@ async function getWisataByCategory(category) {
     }
 }
 
-async function getTopWisata() {
+const getTopWisata = async () => {
     try {
         const snapshot = await db.collection('wisata').orderBy('rating', 'desc').limit(10).get();
+        if (snapshot.empty) {
+            return [];
+        }
+
         const topWisata = [];
         snapshot.forEach(doc => {
-            const data = doc.data();
             topWisata.push({
                 id: doc.id,
-                name: data.name,
-                photo: data.photo,
-                rating: data.rating,
-                description: data.description,
-                lat: data.lat,
-                lon: data.lon,
-                environment: data.environment_classes,
-                scenery: data.scenery_classes,
-                category: data.category_classes,
+                ...doc.data()
             });
         });
+
         return topWisata;
     } catch (error) {
-        throw new Error(`Failed to get top wisata: ${error.message}`);
+        console.error('Error getting top wisata:', error);
+        throw new Error('Failed to get top wisata');
     }
-}
+};
 
 async function getNearestWisata(userLat, userLng) {
     try {
