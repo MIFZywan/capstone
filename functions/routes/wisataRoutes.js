@@ -39,7 +39,7 @@ router.post('/create', async (req, res) => {
         // cek body request tidak boleh kosong!
         if (!name) {
             return res.status(400).json({
-                error: "Semua bidang harus diisi"
+                error: "All fields must be filled"
             });
         }
 
@@ -51,7 +51,7 @@ router.post('/create', async (req, res) => {
         if (response.data.status !== 'OK') {
             return res.status(400).json({
                 error: true,
-                message: response.data.error_message || 'Kesalahan saat mencari data wisata'
+                message: response.data.error_message || 'Error while searching for wisata data'
             });
         }
 
@@ -60,7 +60,7 @@ router.post('/create', async (req, res) => {
         if (!place) {
             return res.status(404).json({
                 error: true,
-                message: 'Tempat wisata tidak ditemukan'
+                message: 'Wisata not found'
             });
         }
 
@@ -68,10 +68,10 @@ router.post('/create', async (req, res) => {
             id,
             name: place.name,
             photoURL: place.photos ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}` : '',
-            rating: place.rating || 'Tidak ada rating',
-            description: place.formatted_address || 'Tidak ada deskripsi',
-            lat: place.geometry.location.lat || 'Tidak ada lat',
-            lon: place.geometry.location.lng || 'Tidak ada lon',
+            rating: place.rating || 'No rating',
+            description: place.formatted_address || 'No description',
+            lat: place.geometry.location.lat || 'No lat',
+            lon: place.geometry.location.lng || 'No lon',
         };
 
         // mengirim data ke firestore
@@ -119,7 +119,7 @@ router.get('/nearest', async (req, res) => {
         } = req.query;
         if (!lat || !lng) {
             return res.status(400).json({
-                error: "Lat dan Lng harus diisi"
+                error: "Lat and Lng must be filled"
             });
         }
         const nearestWisata = await getNearestWisata(parseFloat(lat), parseFloat(lng));
