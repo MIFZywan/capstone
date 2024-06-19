@@ -5,16 +5,21 @@ const {
 const {
     getAuth
 } = require("firebase/auth");
-var serviceAccount = require("../permission.json");
+const dotenv = require('dotenv');
+
+// Load environment variables from .env file
+dotenv.config();
+
+var serviceAccount = require(process.env.SERVICE_ACCOUNT_PATH);
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAnCsuwy6HruGI8jbKiqyAfcN2MlRlau7A",
-    authDomain: "project-capstone-bec58.firebaseapp.com",
-    projectId: "project-capstone-bec58",
-    storageBucket: "project-capstone-bec58.appspot.com",
-    messagingSenderId: "361841512958",
-    appId: "1:361841512958:web:09296a6bebb6c47725b0af",
-    measurementId: "G-CNRS1B7F3Z"
+    apiKey: process.env.API_KEY,
+    authDomain: process.env.AUTH_DOMAIN,
+    projectId: process.env.PROJECT_ID,
+    storageBucket: process.env.STORAGE_BUCKET,
+    messagingSenderId: process.env.MESSAGING_SENDER_ID,
+    appId: process.env.APP_ID,
+    measurementId: process.env.MEASUREMENT_ID
 };
 
 const firebaseApp = initializeApp(firebaseConfig);

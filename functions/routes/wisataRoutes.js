@@ -6,8 +6,8 @@ const {
 const {
     nanoid
 } = require('nanoid');
+const dotenv = require('dotenv');
 const {
-    // createWisata, //di create wisata ini tidak menggunakan fungsi controllernya ya!
     getAllWisata,
     updateWisata,
     deleteWisata,
@@ -18,6 +18,8 @@ const {
     getWisataByCategory,
     getWisata
 } = require('../controllers/wisataController');
+
+dotenv.config();
 
 const router = express.Router();
 
@@ -32,7 +34,7 @@ router.post('/create', async (req, res) => {
         const id = nanoid();
         // request body nama
         const {
-            name,
+            name
         } = req.body;
         // cek body request tidak boleh kosong!
         if (!name) {
@@ -42,7 +44,7 @@ router.post('/create', async (req, res) => {
         }
 
         // apiKey dari gmaps api
-        const apiKey = 'AIzaSyDv4gTOl7wC_UV3BEqEjnsObpJJUuq8Oc8';
+        const apiKey = process.env.GOOGLE_MAPS_API_KEY;
         // untuk mendapatkan data berdasarkan nama dari request body, berdasarkan region:ID (indonesia)
         const response = await axios.get(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&fields=photos,formatted_address,name,rating,geometry&key=${apiKey}&region=ID`);
 
